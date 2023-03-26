@@ -21,7 +21,7 @@ impl AudioVideoData {
             data_file: data_file.to_string(),
             audio_video: HashMap::new(),
             video_list: None,
-            player: MediaPlayer::new(),
+            player: MediaPlayer::default(),
         }
     }
 
@@ -53,8 +53,8 @@ impl AudioVideoData {
             let mut vlist = self
                 .audio_video
                 .clone()
-                .iter()
-                .map(|(k, _)| k.to_string().replace(&self.vpath_prefix, ""))
+                .keys()
+                .map(|k| k.to_string().replace(&self.vpath_prefix, ""))
                 .collect::<Vec<String>>();
             vlist.sort();
             self.video_list = Some(vlist);

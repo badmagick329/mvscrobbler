@@ -28,7 +28,7 @@ pub async fn run() {
                 break;
             }
             ViewTypes::MainMenu => {
-                view_type = MainMenu::new().start();
+                view_type = MainMenu::default().start();
             }
             ViewTypes::MVSelector => {
                 view_type = mv_selector.start().await;

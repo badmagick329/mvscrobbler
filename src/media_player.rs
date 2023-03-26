@@ -7,19 +7,13 @@ use tokio::sync;
 use tokio::task::JoinHandle;
 use tokio::time;
 
+#[derive(Default)]
 pub struct MediaPlayer {
     audio_tx: Option<Arc<sync::mpsc::Sender<u32>>>,
     video_tx: Option<Arc<sync::mpsc::Sender<u32>>>,
 }
 
 impl MediaPlayer {
-    pub fn new() -> Self {
-        Self {
-            audio_tx: None,
-            video_tx: None,
-        }
-    }
-
     pub async fn play_media(&mut self, audio_path: String, video_path: String) {
         if self.audio_tx.is_some() {
             self.audio_tx.as_ref().unwrap().send(1).await;

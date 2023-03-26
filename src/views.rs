@@ -26,7 +26,7 @@ impl FzfSelector {
 
     pub fn fzf_select(self) -> String {
         let mut child = Command::new("fzf")
-            .args(&["--height", self.height.as_str(), "--reverse"])
+            .args(["--height", self.height.as_str(), "--reverse"])
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()
@@ -34,11 +34,11 @@ impl FzfSelector {
         let mut stdin = child.stdin.take().expect("Failed to open stdin");
         let mut fzf_in = String::new();
         for input in self.inputs.iter() {
-            fzf_in.push_str(&input);
+            fzf_in.push_str(input);
             fzf_in.push('\n');
         }
         for option in self.other_options.iter() {
-            fzf_in.push_str(&option);
+            fzf_in.push_str(option);
             fzf_in.push('\n');
         }
         stdin
@@ -100,12 +100,7 @@ impl ViewTypes {
             .collect()
     }
     pub fn get_selection(selected: &str) -> Option<&ViewTypes> {
-        for view in ViewTypes::iterator() {
-            if selected == format!("[[{}]]", view) {
-                return Some(view);
-            }
-        }
-        None
+        ViewTypes::iterator().find(|&view| selected == format!("[[{}]]", view))
     }
 }
 
@@ -156,11 +151,9 @@ impl MVSelector {
 
     pub async fn start(&mut self) -> ViewTypes {
         loop {
-            // clear_term(&self.header)
-            //     .unwrap_or_else(|e| eprintln!("Couldn't clear terminal: {}", e));
-            println!("Current filters are {:?}", self.filters);
+            clear_term(&self.header)
+                .unwrap_or_else(|e| eprintln!("Couldn't clear terminal: {}", e));
             let filtered_list = self.filtered_list();
-            // println!("Filtered list is {:?}", filtered_list);
             let menu = self.generate_menu(&self.view_type);
             let fzf_view = FzfSelector::new(Some(self.filtered_list()), Some(menu.clone()), None);
             let selected = fzf_view.fzf_select();
@@ -178,7 +171,20 @@ impl MVSelector {
         self.avd
             .list_videos()
             .iter()
-            .filter(|video| self.filter_video(video))
+            .filter(|video| {
+                let mv_name = video.split(" - ").last();
+                if mv_name.is_none() {
+                    return false;
+                }
+                let is_live = mv_name.unwrap().contains('(') && mv_name.unwrap().contains(')');
+                if self.filters.contains(&FilterTypes::MVs) && !is_live {
+                    return false;
+                }
+                if self.filters.contains(&FilterTypes::Live) && is_live {
+                    return false;
+                }
+                true
+            })
             .map(|video| video.to_owned())
             .collect()
     }
@@ -188,13 +194,11 @@ impl MVSelector {
         if mv_name.is_none() {
             return false;
         }
-        let is_live = mv_name.unwrap().contains("(") && mv_name.unwrap().contains(")");
+        let is_live = mv_name.unwrap().contains('(') && mv_name.unwrap().contains(')');
         if self.filters.contains(&FilterTypes::MVs) && !is_live {
-            println!("{} is not a live video. MV Filter", video);
             return false;
         }
         if self.filters.contains(&FilterTypes::Live) && is_live {
-            println!("{} is a live video. Live Filter", video);
             return false;
         }
         true
@@ -206,7 +210,7 @@ impl MVSelector {
         } else {
             self.filters.push(filter);
         }
-        ViewTypes::MainMenu
+        ViewTypes::MVSelector
     }
 }
 
@@ -217,18 +221,20 @@ pub struct MainMenu {
 
 impl ViewsMenu for MainMenu {}
 
-impl MainMenu {
-    pub fn new() -> Self {
+impl Default for MainMenu {
+    fn default() -> Self {
         Self {
             view_type: ViewTypes::MainMenu,
             header: "Main Menu".to_owned(),
         }
     }
+}
 
+impl MainMenu {
     pub fn start(&mut self) -> ViewTypes {
         loop {
-            // clear_term(&self.header)
-            //     .unwrap_or_else(|e| eprintln!("Couldn't clear terminal: {}", e));
+            clear_term(&self.header)
+                .unwrap_or_else(|e| eprintln!("Couldn't clear terminal: {}", e));
             let menu = self.generate_menu(&self.view_type);
             let fzf_view = FzfSelector::new(None, Some(menu.clone()), None);
             let selected = fzf_view.fzf_select();
