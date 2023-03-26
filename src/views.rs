@@ -64,6 +64,8 @@ fn clear_term(header: &str) -> Result<(), std::io::Error> {
 pub enum ViewTypes {
     MainMenu,
     MVSelector,
+    ToggleMVs,
+    ToggleLive,
     Quit,
 }
 
@@ -72,6 +74,8 @@ impl std::fmt::Display for ViewTypes {
         match self {
             ViewTypes::MainMenu => write!(f, "Main Menu"),
             ViewTypes::MVSelector => write!(f, "MV Selector"),
+            ViewTypes::ToggleMVs => write!(f, "Toggle MVs"),
+            ViewTypes::ToggleLive => write!(f, "Toggle Live"),
             ViewTypes::Quit => write!(f, "Quit"),
         }
     }
@@ -79,8 +83,13 @@ impl std::fmt::Display for ViewTypes {
 
 impl ViewTypes {
     fn iterator() -> Iter<'static, ViewTypes> {
-        static VIEWS: [ViewTypes; 3] =
-            [ViewTypes::MainMenu, ViewTypes::MVSelector, ViewTypes::Quit];
+        static VIEWS: [ViewTypes; 5] = [
+            ViewTypes::MainMenu,
+            ViewTypes::MVSelector,
+            ViewTypes::ToggleMVs,
+            ViewTypes::ToggleLive,
+            ViewTypes::Quit,
+        ];
         VIEWS.iter()
     }
 
@@ -100,10 +109,26 @@ impl ViewTypes {
     }
 }
 
+#[derive(PartialEq, Eq, Clone, Debug)]
+pub enum FilterTypes {
+    MVs,
+    Live,
+}
+
+impl std::fmt::Display for FilterTypes {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            FilterTypes::MVs => write!(f, "MVs"),
+            FilterTypes::Live => write!(f, "Live"),
+        }
+    }
+}
+
 pub struct MVSelector {
     view_type: ViewTypes,
     avd: AudioVideoData,
     header: String,
+    filters: Vec<FilterTypes>,
 }
 
 trait ViewsMenu {
@@ -125,15 +150,19 @@ impl MVSelector {
             view_type: ViewTypes::MVSelector,
             avd,
             header: "Search for an MV or search quit to exit".to_owned(),
+            filters: Vec::new(),
         }
     }
 
     pub async fn start(&mut self) -> ViewTypes {
         loop {
-            clear_term(&self.header)
-                .unwrap_or_else(|e| eprintln!("Couldn't clear terminal: {}", e));
+            // clear_term(&self.header)
+            //     .unwrap_or_else(|e| eprintln!("Couldn't clear terminal: {}", e));
+            println!("Current filters are {:?}", self.filters);
+            let filtered_list = self.filtered_list();
+            // println!("Filtered list is {:?}", filtered_list);
             let menu = self.generate_menu(&self.view_type);
-            let fzf_view = FzfSelector::new(Some(self.avd.list_videos()), Some(menu.clone()), None);
+            let fzf_view = FzfSelector::new(Some(self.filtered_list()), Some(menu.clone()), None);
             let selected = fzf_view.fzf_select();
             if let Some(view) = ViewTypes::get_selection(&selected) {
                 return view.clone();
@@ -144,6 +173,40 @@ impl MVSelector {
                 selected
             );
         }
+    }
+    fn filtered_list(&mut self) -> Vec<String> {
+        self.avd
+            .list_videos()
+            .iter()
+            .filter(|video| self.filter_video(video))
+            .map(|video| video.to_owned())
+            .collect()
+    }
+
+    fn filter_video(&self, video: &str) -> bool {
+        let mv_name = video.split(" - ").last();
+        if mv_name.is_none() {
+            return false;
+        }
+        let is_live = mv_name.unwrap().contains("(") && mv_name.unwrap().contains(")");
+        if self.filters.contains(&FilterTypes::MVs) && !is_live {
+            println!("{} is not a live video. MV Filter", video);
+            return false;
+        }
+        if self.filters.contains(&FilterTypes::Live) && is_live {
+            println!("{} is a live video. Live Filter", video);
+            return false;
+        }
+        true
+    }
+
+    pub fn toggle_filter(&mut self, filter: FilterTypes) -> ViewTypes {
+        if self.filters.contains(&filter) {
+            self.filters.retain(|f| *f != filter);
+        } else {
+            self.filters.push(filter);
+        }
+        ViewTypes::MainMenu
     }
 }
 
@@ -164,8 +227,8 @@ impl MainMenu {
 
     pub fn start(&mut self) -> ViewTypes {
         loop {
-            clear_term(&self.header)
-                .unwrap_or_else(|e| eprintln!("Couldn't clear terminal: {}", e));
+            // clear_term(&self.header)
+            //     .unwrap_or_else(|e| eprintln!("Couldn't clear terminal: {}", e));
             let menu = self.generate_menu(&self.view_type);
             let fzf_view = FzfSelector::new(None, Some(menu.clone()), None);
             let selected = fzf_view.fzf_select();

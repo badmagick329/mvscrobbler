@@ -7,7 +7,7 @@ use std::io::{stdout, Write};
 
 use avmod::AudioVideoData;
 use crossterm::{cursor, terminal, QueueableCommand};
-use views::{FzfSelector, MVSelector, MainMenu, ViewTypes};
+use views::{FilterTypes, FzfSelector, MVSelector, MainMenu, ViewTypes};
 
 const AVINFO: &str = "/media/badmagick/HDD/Projects/rust_mvplayer/avinfo.json";
 const VPATH_PREFIX: &str = "/media/badmagick/HDD/Music/MVs/";
@@ -32,6 +32,12 @@ pub async fn run() {
             }
             ViewTypes::MVSelector => {
                 view_type = mv_selector.start().await;
+            }
+            ViewTypes::ToggleLive => {
+                view_type = mv_selector.toggle_filter(FilterTypes::Live);
+            }
+            ViewTypes::ToggleMVs => {
+                view_type = mv_selector.toggle_filter(FilterTypes::MVs);
             }
         }
     }
