@@ -47,8 +47,7 @@ impl MediaPlayer {
         });
         tokio::spawn(async move {
             let mut child = Command::new("mpv")
-                .arg(video_path)
-                .arg("--no-terminal")
+                .args(&[video_path, "--no-terminal".to_string(), "--fs".to_string()])
                 // .stdout(Stdio::null())
                 .spawn()
                 .expect("failed to spawn video player task");

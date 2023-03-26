@@ -1,24 +1,26 @@
-#![allow(unused_imports, dead_code, unused_variables, unused_must_use)]
+use super::avmod::AudioVideoData;
+use crossterm::{cursor, terminal, QueueableCommand};
 use std::io::{stdout, Write};
-use std::process::{Child, Command, Stdio};
+use std::process::{Command, Stdio};
+use std::slice::Iter;
 use std::str;
 
-pub struct FzfMenu {
-    height: String,
+pub struct FzfSelector {
     inputs: Vec<String>,
     other_options: Vec<String>,
+    height: String,
 }
 
-impl FzfMenu {
+impl FzfSelector {
     pub fn new(
-        inputs: Vec<String>,
+        inputs: Option<Vec<String>>,
         other_options: Option<Vec<String>>,
         height: Option<String>,
-    ) -> FzfMenu {
+    ) -> FzfSelector {
         Self {
-            height: height.unwrap_or("20%".to_string()),
-            inputs,
+            inputs: inputs.unwrap_or(Vec::new()),
             other_options: other_options.unwrap_or(Vec::new()),
+            height: height.unwrap_or("80%".to_string()),
         }
     }
 
@@ -36,7 +38,7 @@ impl FzfMenu {
             fzf_in.push('\n');
         }
         for option in self.other_options.iter() {
-            fzf_in.push_str(format!("[{}]", option).as_str());
+            fzf_in.push_str(&option);
             fzf_in.push('\n');
         }
         stdin
@@ -46,5 +48,130 @@ impl FzfMenu {
             .wait_with_output()
             .expect("Failed to read fzf command stdout");
         String::from(str::from_utf8(&output.stdout).unwrap().trim())
+    }
+}
+
+fn clear_term(header: &str) -> Result<(), std::io::Error> {
+    let mut stdout = stdout();
+    stdout
+        .queue(terminal::Clear(terminal::ClearType::All))?
+        .queue(cursor::MoveTo(0, 0))?;
+    write!(stdout, "{}", header)?;
+    stdout.flush()
+}
+
+#[derive(PartialEq, Eq, Clone)]
+pub enum ViewTypes {
+    MainMenu,
+    MVSelector,
+    Quit,
+}
+
+impl std::fmt::Display for ViewTypes {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ViewTypes::MainMenu => write!(f, "Main Menu"),
+            ViewTypes::MVSelector => write!(f, "MV Selector"),
+            ViewTypes::Quit => write!(f, "Quit"),
+        }
+    }
+}
+
+impl ViewTypes {
+    fn iterator() -> Iter<'static, ViewTypes> {
+        static VIEWS: [ViewTypes; 3] =
+            [ViewTypes::MainMenu, ViewTypes::MVSelector, ViewTypes::Quit];
+        VIEWS.iter()
+    }
+
+    pub fn other_views(&self) -> Vec<String> {
+        ViewTypes::iterator()
+            .filter(|view| *view != self)
+            .map(|view| view.to_string())
+            .collect()
+    }
+    pub fn get_selection(selected: &str) -> Option<&ViewTypes> {
+        for view in ViewTypes::iterator() {
+            if selected == format!("[[{}]]", view) {
+                return Some(view);
+            }
+        }
+        None
+    }
+}
+
+pub struct MVSelector {
+    view_type: ViewTypes,
+    avd: AudioVideoData,
+    header: String,
+}
+
+trait ViewsMenu {
+    fn generate_menu(&self, view_type: &ViewTypes) -> Vec<String> {
+        let mut menu = Vec::new();
+        for view in view_type.other_views().iter() {
+            menu.push(format!("[[{}]]", view));
+        }
+        menu
+    }
+}
+
+impl ViewsMenu for MVSelector {}
+
+/// UI Entrypoint
+impl MVSelector {
+    pub fn new(avd: AudioVideoData) -> Self {
+        Self {
+            view_type: ViewTypes::MVSelector,
+            avd,
+            header: "Search for an MV or search quit to exit".to_owned(),
+        }
+    }
+
+    pub async fn start(&mut self) -> ViewTypes {
+        loop {
+            clear_term(&self.header)
+                .unwrap_or_else(|e| eprintln!("Couldn't clear terminal: {}", e));
+            let menu = self.generate_menu(&self.view_type);
+            let fzf_view = FzfSelector::new(Some(self.avd.list_videos()), Some(menu.clone()), None);
+            let selected = fzf_view.fzf_select();
+            if let Some(view) = ViewTypes::get_selection(&selected) {
+                return view.clone();
+            }
+            self.avd.play_media(&selected).await;
+            self.header = format!(
+                "Playing {}\n\nSearch for an MV or search quit to exit",
+                selected
+            );
+        }
+    }
+}
+
+pub struct MainMenu {
+    view_type: ViewTypes,
+    header: String,
+}
+
+impl ViewsMenu for MainMenu {}
+
+impl MainMenu {
+    pub fn new() -> Self {
+        Self {
+            view_type: ViewTypes::MainMenu,
+            header: "Main Menu".to_owned(),
+        }
+    }
+
+    pub fn start(&mut self) -> ViewTypes {
+        loop {
+            clear_term(&self.header)
+                .unwrap_or_else(|e| eprintln!("Couldn't clear terminal: {}", e));
+            let menu = self.generate_menu(&self.view_type);
+            let fzf_view = FzfSelector::new(None, Some(menu.clone()), None);
+            let selected = fzf_view.fzf_select();
+            if let Some(view) = ViewTypes::get_selection(&selected) {
+                return view.clone();
+            }
+        }
     }
 }
