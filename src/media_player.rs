@@ -9,8 +9,8 @@ use tokio::time;
 
 #[derive(Default)]
 pub struct MediaPlayer {
-    audio_tx: Option<Arc<sync::mpsc::Sender<u32>>>,
-    video_tx: Option<Arc<sync::mpsc::Sender<u32>>>,
+    audio_tx: Option<Arc<sync::mpsc::Sender<usize>>>,
+    video_tx: Option<Arc<sync::mpsc::Sender<usize>>>,
 }
 
 impl MediaPlayer {
@@ -21,8 +21,8 @@ impl MediaPlayer {
         if self.video_tx.is_some() {
             self.video_tx.as_ref().unwrap().send(1).await;
         }
-        let (audio_tx, mut audio_rx) = sync::mpsc::channel::<u32>(1);
-        let (video_tx, mut video_rx) = sync::mpsc::channel::<u32>(1);
+        let (audio_tx, mut audio_rx) = sync::mpsc::channel::<usize>(1);
+        let (video_tx, mut video_rx) = sync::mpsc::channel::<usize>(1);
         self.audio_tx = Some(Arc::new(audio_tx));
         self.video_tx = Some(Arc::new(video_tx));
 
