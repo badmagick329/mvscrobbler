@@ -8,6 +8,7 @@ use std::io::{stdout, Write};
 use avmod::AudioVideoData;
 use crossterm::{cursor, terminal, QueueableCommand};
 use views::{FilterTypes, FzfSelector, MVSelector, MainMenu, ViewTypes};
+use views::updater;
 
 const AVINFO: &str = "/media/badmagick/HDD/Projects/rust_mvplayer/avinfo.json";
 const VPATH_PREFIX: &str = "/media/badmagick/HDD/Music/MVs/";

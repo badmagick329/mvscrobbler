@@ -1,3 +1,4 @@
+pub mod updater;
 use super::avmod::AudioVideoData;
 use crossterm::{cursor, terminal, QueueableCommand};
 use std::io::{stdout, Write};
@@ -244,3 +245,4 @@ impl MainMenu {
         }
     }
 }
+

@@ -48,6 +48,18 @@ impl AudioVideoData {
         }
     }
 
+    pub fn save_data(&mut self) {
+        let mut save_formatted = HashMap::new();
+        for (video_path, audio_path) in &self.audio_video {
+            save_formatted.insert(
+                video_path.replace(&self.vpath_prefix, ""),
+                audio_path.replace(&self.apath_prefix, ""),
+            );
+        }
+        let data = serde_json::to_string_pretty(&save_formatted).unwrap();
+        std::fs::write(&self.data_file, data).expect("Unable to save data file");
+    }
+
     pub fn list_videos(&mut self) -> Vec<String> {
         if self.video_list.is_none() {
             let mut vlist = self
