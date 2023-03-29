@@ -4,11 +4,12 @@ pub mod media_player;
 pub mod views;
 
 use std::io::{stdout, Write};
+use std::cell::RefCell;
 
 use avmod::AudioVideoData;
 use crossterm::{cursor, terminal, QueueableCommand};
-use views::{FilterTypes, FzfSelector, MVSelector, MainMenu, ViewTypes};
 use views::updater;
+use views::{FilterTypes, FzfSelector, MVSelector, MainMenu, ViewTypes};
 
 const AVINFO: &str = "/media/badmagick/HDD/Projects/rust_mvplayer/avinfo.json";
 const VPATH_PREFIX: &str = "/media/badmagick/HDD/Music/MVs/";
@@ -20,7 +21,7 @@ const APATH_PREFIX: &str = "/media/badmagick/HDD/";
 pub async fn run() {
     let mut avd = AudioVideoData::new(AVINFO, APATH_PREFIX, VPATH_PREFIX);
     avd.load_data();
-    let mut mv_selector = MVSelector::new(avd);
+    let mut mv_selector = MVSelector::new(RefCell::new(avd));
     let mut view_type: ViewTypes = ViewTypes::MVSelector;
     loop {
         match view_type {

@@ -1,6 +1,7 @@
 pub mod updater;
 use super::avmod::AudioVideoData;
 use crossterm::{cursor, terminal, QueueableCommand};
+use std::cell::RefCell;
 use std::io::{stdout, Write};
 use std::process::{Command, Stdio};
 use std::slice::Iter;
@@ -122,7 +123,7 @@ impl std::fmt::Display for FilterTypes {
 
 pub struct MVSelector {
     view_type: ViewTypes,
-    avd: AudioVideoData,
+    avd: RefCell<AudioVideoData>,
     header: String,
     filters: Vec<FilterTypes>,
 }
@@ -141,7 +142,7 @@ impl ViewsMenu for MVSelector {}
 
 /// UI Entrypoint
 impl MVSelector {
-    pub fn new(avd: AudioVideoData) -> Self {
+    pub fn new(avd: RefCell<AudioVideoData>) -> Self {
         Self {
             view_type: ViewTypes::MVSelector,
             avd,
@@ -161,7 +162,7 @@ impl MVSelector {
             if let Some(view) = ViewTypes::get_selection(&selected) {
                 return view.clone();
             }
-            self.avd.play_media(&selected).await;
+            self.avd.borrow_mut().play_media(&selected).await;
             self.header = format!(
                 "Playing {}\n\nSearch for an MV or search quit to exit",
                 selected
@@ -170,6 +171,7 @@ impl MVSelector {
     }
     fn filtered_list(&mut self) -> Vec<String> {
         self.avd
+            .borrow_mut()
             .list_videos()
             .iter()
             .filter(|video| {
@@ -245,4 +247,3 @@ impl MainMenu {
         }
     }
 }
-
