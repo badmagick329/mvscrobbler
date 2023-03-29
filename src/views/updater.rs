@@ -1,6 +1,7 @@
 #![allow(unused_imports, dead_code, unused_variables, unused_must_use)]
 use super::super::avmod::AudioVideoData;
 use crossterm::{cursor, terminal, QueueableCommand};
+use std::cell::RefCell;
 use std::io::{stdout, Write};
 use std::process::{Command, Stdio};
 use std::slice::Iter;
@@ -34,4 +35,6 @@ use std::str;
 //     fn
 // }
 
-
+// struct Unscanned {
+//     avd: RefCell<AudioVideoData>,
+// }

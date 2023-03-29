@@ -4,12 +4,13 @@ pub mod media_player;
 pub mod views;
 
 use std::io::{stdout, Write};
-use std::cell::RefCell;
 
 use avmod::AudioVideoData;
 use crossterm::{cursor, terminal, QueueableCommand};
 use views::updater;
-use views::{FilterTypes, FzfSelector, MVSelector, MainMenu, ViewTypes};
+use views::fzf_selector::FzfSelector;
+use views::menu::{MenuOptions, MainMenu};
+use views::mv_selector::{MVSelector, FilterTypes};
 
 const AVINFO: &str = "/media/badmagick/HDD/Projects/rust_mvplayer/avinfo.json";
 const VPATH_PREFIX: &str = "/media/badmagick/HDD/Music/MVs/";
@@ -21,25 +22,25 @@ const APATH_PREFIX: &str = "/media/badmagick/HDD/";
 pub async fn run() {
     let mut avd = AudioVideoData::new(AVINFO, APATH_PREFIX, VPATH_PREFIX);
     avd.load_data();
-    let mut mv_selector = MVSelector::new(RefCell::new(avd));
-    let mut view_type: ViewTypes = ViewTypes::MVSelector;
+    let mut mv_selector = MVSelector::new(avd);
+    let mut selected_opt: MenuOptions = MenuOptions::MVSelector;
     loop {
-        match view_type {
-            ViewTypes::Quit => {
+        match selected_opt {
+            MenuOptions::Quit => {
                 println!("Exiting...");
                 break;
             }
-            ViewTypes::MainMenu => {
-                view_type = MainMenu::default().start();
+            MenuOptions::MainMenu => {
+                selected_opt = MainMenu::default().start();
             }
-            ViewTypes::MVSelector => {
-                view_type = mv_selector.start().await;
+            MenuOptions::MVSelector => {
+                selected_opt = mv_selector.start().await;
             }
-            ViewTypes::ToggleLive => {
-                view_type = mv_selector.toggle_filter(FilterTypes::Live);
+            MenuOptions::ToggleLive => {
+                selected_opt = mv_selector.toggle_filter(FilterTypes::Live);
             }
-            ViewTypes::ToggleMVs => {
-                view_type = mv_selector.toggle_filter(FilterTypes::MVs);
+            MenuOptions::ToggleMVs => {
+                selected_opt = mv_selector.toggle_filter(FilterTypes::MVs);
             }
         }
     }

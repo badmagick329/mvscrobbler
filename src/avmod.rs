@@ -83,6 +83,13 @@ impl AudioVideoData {
     fn to_audio_path(&self, audio_name: &str) -> String {
         format!("{}{}", self.apath_prefix, audio_name)
     }
+
+    pub fn get_json(&self) -> JsonFormat {
+        self.audio_video.clone()
+    }
+    pub fn update_json(&mut self, json: JsonFormat) {
+        self.audio_video = json;
+    }
 }
 
 // use serde::{Deserialize, Serialize};
