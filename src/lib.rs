@@ -7,20 +7,20 @@ use std::io::{stdout, Write};
 
 use avmod::AudioVideoData;
 use crossterm::{cursor, terminal, QueueableCommand};
-use views::updater;
 use views::fzf_selector::FzfSelector;
-use views::menu::{MenuOptions, MainMenu};
-use views::mv_selector::{MVSelector, FilterTypes};
+use views::menu::{MainMenu, MenuOptions};
+use views::mv_selector::{FilterTypes, MVSelector};
+use views::updater;
 
 const AVINFO: &str = "/media/badmagick/HDD/Projects/rust_mvplayer/avinfo.json";
-const VPATH_PREFIX: &str = "/media/badmagick/HDD/Music/MVs/";
-const APATH_PREFIX: &str = "/media/badmagick/HDD/";
+const VIDEO_DIR: &str = "/media/badmagick/HDD/Music/MVs/";
+const AUDIO_DIR: &str = "/media/badmagick/HDD/Music/Library/";
 // const AVINFO: &str = "F:\\Projects\\rust_mvplayer\\avinfo.json";
 // const VPATH_PREFIX: &str = "F:\\Music\\MVs\\";
 // const APATH_PREFIX: &str = "F:\\";
 
 pub async fn run() {
-    let mut avd = AudioVideoData::new(AVINFO, APATH_PREFIX, VPATH_PREFIX);
+    let mut avd = AudioVideoData::new(AVINFO, VIDEO_DIR.to_string(), AUDIO_DIR.to_string());
     avd.load_data();
     let mut mv_selector = MVSelector::new(avd);
     let mut selected_opt: MenuOptions = MenuOptions::MVSelector;

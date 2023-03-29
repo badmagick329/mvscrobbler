@@ -2,6 +2,8 @@ use super::super::avmod::AudioVideoData;
 use super::clear_term;
 use super::fzf_selector::FzfSelector;
 use super::menu::MenuOptions;
+use std::slice::Iter;
+use std::str;
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub enum FilterTypes {
@@ -54,6 +56,7 @@ impl MVSelector {
             );
         }
     }
+
     fn filtered_list(&mut self) -> Vec<String> {
         self.avd
             .list_videos()
