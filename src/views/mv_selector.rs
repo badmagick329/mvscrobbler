@@ -22,7 +22,7 @@ impl std::fmt::Display for FilterTypes {
 
 pub struct MVSelector {
     view_type: MenuOptions,
-    avd: AudioVideoData,
+    pub avd: AudioVideoData,
     header: String,
     filters: Vec<FilterTypes>,
 }

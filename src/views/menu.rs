@@ -10,6 +10,7 @@ pub enum MenuOptions {
     ToggleMVs,
     ToggleLive,
     Quit,
+    Update,
 }
 
 impl std::fmt::Display for MenuOptions {
@@ -20,18 +21,20 @@ impl std::fmt::Display for MenuOptions {
             MenuOptions::ToggleMVs => write!(f, "Toggle MVs"),
             MenuOptions::ToggleLive => write!(f, "Toggle Live"),
             MenuOptions::Quit => write!(f, "Quit"),
+            MenuOptions::Update => write!(f, "Update"),
         }
     }
 }
 
 impl MenuOptions {
     fn iterator() -> Iter<'static, MenuOptions> {
-        static OPTIONS: [MenuOptions; 5] = [
+        static OPTIONS: [MenuOptions; 6] = [
             MenuOptions::MainMenu,
             MenuOptions::MVSelector,
             MenuOptions::ToggleMVs,
             MenuOptions::ToggleLive,
             MenuOptions::Quit,
+            MenuOptions::Update,
         ];
         OPTIONS.iter()
     }

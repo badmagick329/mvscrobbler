@@ -1,6 +1,5 @@
 #![allow(dead_code, unused_mut)]
 use super::media_player::MediaPlayer;
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs;
 use std::io::{Read, Write};
@@ -99,10 +98,6 @@ impl AudioVideoData {
             self.video_list = Some(vlist);
         }
         self.video_list.clone().unwrap()
-    }
-
-    pub fn get_json(&self) -> JsonFormat {
-        self.audio_video.clone()
     }
     pub fn update_json(&mut self, json: JsonFormat) {
         self.audio_video = json;
