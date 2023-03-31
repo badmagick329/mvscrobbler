@@ -13,4 +13,5 @@ fn clear_term(header: &str) -> Result<(), std::io::Error> {
         .queue(cursor::MoveTo(0, 0))?;
     write!(stdout, "{}", header)?;
     stdout.flush()
+
 }

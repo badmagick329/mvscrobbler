@@ -1,9 +1,11 @@
 #![allow(dead_code, unused_mut)]
 use super::media_player::MediaPlayer;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs;
 use std::io::{Read, Write};
 use std::path::{Component, Path};
+use std::sync::Arc;
 
 type JsonFormat = HashMap<String, String>;
 
@@ -22,18 +24,23 @@ pub struct AudioVideoData {
     pub data_file: String,
     pub video_dir: String,
     pub audio_dir: String,
-    pub audio_video: JsonFormat,
-    video_list: Option<Vec<String>>,
+    pub audio_video: Arc<RefCell<JsonFormat>>,
+    pub video_list: Option<Vec<String>>,
     player: MediaPlayer,
 }
 
 impl AudioVideoData {
-    pub fn new(data_file: &str, video_dir: String, audio_dir: String) -> Self {
+    pub fn new(
+        data_file: &str,
+        video_dir: String,
+        audio_dir: String,
+        audio_video: Arc<RefCell<JsonFormat>>,
+    ) -> Self {
         Self {
             data_file: data_file.to_string(),
             video_dir,
             audio_dir,
-            audio_video: HashMap::new(),
+            audio_video,
             video_list: None,
             player: MediaPlayer::default(),
         }
@@ -45,7 +52,11 @@ impl AudioVideoData {
         let video_path = binding.to_str().unwrap();
         self.player
             .play_media(
-                self.audio_video.get(video_path).unwrap().to_owned(),
+                self.audio_video
+                    .borrow()
+                    .get(video_path)
+                    .unwrap()
+                    .to_owned(),
                 video_path.to_owned(),
             )
             .await;
@@ -55,27 +66,28 @@ impl AudioVideoData {
         let data = fs::read_to_string(&self.data_file).expect("Unable to read data file");
         let read_data =
             serde_json::from_str::<JsonFormat>(&data).expect("Unable to parse data file");
-        let mut remove_entries = Vec::new();
+        let mut update_save = false;
         for (video_path, audio_path) in read_data {
             let full_vpath = Path::new(&self.video_dir).join(&video_path);
             let full_apath = Path::new(&self.audio_dir).join(&audio_path);
             if !full_vpath.exists() || !full_apath.exists() {
-                remove_entries.push(video_path);
+                update_save = true;
                 continue;
             }
-            self.audio_video.insert(
+            self.audio_video.borrow_mut().insert(
                 format!("{}", full_vpath.to_str().unwrap()),
                 format!("{}", full_apath.to_str().unwrap()),
             );
         }
+        if update_save {
+            self.save_data();
+        }
     }
 
     pub fn save_data(&mut self) {
-        let mut save_formatted = HashMap::new();
-        for (video_path, audio_path) in &self.audio_video {
-            save_formatted.insert(video_path, audio_path);
-        }
-        let data = serde_json::to_string_pretty(&save_formatted).unwrap();
+        println!("Saving data");
+        let to_save = self.audio_video.borrow().clone();
+        let data = serde_json::to_string_pretty(&to_save).unwrap();
         let mut file = fs::File::create(&self.data_file).unwrap();
         file.write_all(data.as_bytes()).unwrap();
     }
@@ -84,6 +96,7 @@ impl AudioVideoData {
         if self.video_list.is_none() {
             let mut vlist = self
                 .audio_video
+                .borrow()
                 .clone()
                 .keys()
                 .map(|k| {
@@ -98,9 +111,6 @@ impl AudioVideoData {
             self.video_list = Some(vlist);
         }
         self.video_list.clone().unwrap()
-    }
-    pub fn update_json(&mut self, json: JsonFormat) {
-        self.audio_video = json;
     }
 }
 
@@ -125,6 +135,8 @@ impl AudioVideoData {
 
 #[cfg(test)]
 mod tests {
+    use std::borrow::BorrowMut;
+
     use super::*;
     use tempdir::TempDir;
 
@@ -132,16 +144,24 @@ mod tests {
     fn test_save_data() {
         let temp_dir = TempDir::new("test_save_data").unwrap();
         let data_file = temp_dir.path().join("data.json");
+        let rc = Arc::new(RefCell::new(HashMap::new()));
         let mut av_data = AudioVideoData::new(
             data_file.to_str().unwrap(),
             "video".to_string(),
             "audio".to_string(),
+            rc.clone(),
         );
+        // let mut borrowed = av_data.audio_video.deref().borrow_mut();
+        // let mut borrowed = av_data.audio_video.as_ref().borrow_mut();
         av_data
             .audio_video
+            .as_ref()
+            .borrow_mut()
             .insert("video/1.mp4".to_string(), "audio/1.mp3".to_string());
         av_data
             .audio_video
+            .as_ref()
+            .borrow_mut()
             .insert("video/2.mp4".to_string(), "audio/2.mp3".to_string());
         av_data.save_data();
         let data = fs::read_to_string(&data_file).unwrap();
@@ -173,19 +193,21 @@ mod tests {
         let audio_file1 = audio_dir.join("1.mp3");
         create_file(&video_dir, &video_file1).unwrap();
         create_file(&audio_dir, &audio_file1).unwrap();
+        let rc = Arc::new(RefCell::new(HashMap::new()));
         let mut av_data = AudioVideoData::new(
             data_file.to_str().unwrap(),
             video_dir.to_str().unwrap().to_string(),
             audio_dir.to_str().unwrap().to_string(),
+            rc,
         );
-        av_data.audio_video.insert(
+        av_data.audio_video.as_ref().borrow_mut().insert(
             video_file1.to_str().unwrap().to_owned(),
             audio_file1.to_str().unwrap().to_owned(),
         );
         av_data.save_data();
-        av_data.audio_video.clear();
+        av_data.audio_video.as_ref().borrow_mut().clear();
         av_data.load_data();
-        assert_eq!(av_data.audio_video.len(), 1);
+        assert_eq!(av_data.audio_video.borrow().len(), 1);
     }
 
     #[test]
@@ -202,18 +224,20 @@ mod tests {
         if audio_dir.exists() {
             fs::remove_dir_all(&audio_dir).unwrap();
         }
+        let rc = Arc::new(RefCell::new(HashMap::new()));
         let mut av_data = AudioVideoData::new(
             data_file.to_str().unwrap(),
             video_dir.to_str().unwrap().to_string(),
             audio_dir.to_str().unwrap().to_string(),
+            rc,
         );
-        av_data.audio_video.insert(
+        av_data.audio_video.as_ref().borrow_mut().insert(
             video_file1.to_str().unwrap().to_owned(),
             audio_file1.to_str().unwrap().to_owned(),
         );
         av_data.save_data();
-        av_data.audio_video.clear();
+        av_data.audio_video.as_ref().borrow_mut().clear();
         av_data.load_data();
-        assert_eq!(av_data.audio_video.len(), 0);
+        assert_eq!(av_data.audio_video.borrow().len(), 0);
     }
 }

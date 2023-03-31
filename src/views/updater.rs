@@ -10,6 +10,7 @@ use std::path::Path;
 use std::process::{Command, Stdio};
 use std::slice::Iter;
 use std::str;
+use std::sync::Arc;
 use walkdir::WalkDir;
 
 use super::menu::MenuOptions;
@@ -17,24 +18,17 @@ use super::menu::MenuOptions;
 type JsonFormat = HashMap<String, String>;
 
 pub struct Updater {
-    data_file: String,
     mv_dir: String,
     audio_dir: String,
-    audio_video: RefCell<JsonFormat>,
+    audio_video: Arc<RefCell<JsonFormat>>,
     mvs_found: Option<Vec<String>>,
     audio_found: Option<Vec<String>>,
     selected_mv: Option<String>,
 }
 
 impl Updater {
-    pub fn new(
-        data_file: &str,
-        mv_dir: String,
-        audio_dir: String,
-        audio_video: RefCell<JsonFormat>,
-    ) -> Self {
+    pub fn new(mv_dir: String, audio_dir: String, audio_video: Arc<RefCell<JsonFormat>>) -> Self {
         Self {
-            data_file: data_file.to_owned(),
             mv_dir,
             audio_dir,
             audio_video,
@@ -73,16 +67,32 @@ impl Updater {
             }
             let list_audios = ListAudios::new(audio_list.clone());
             let selected_audio = list_audios.start();
-            if let Some(audio) = selected_audio {
+            self.update_entry(
+                self.selected_mv.as_ref().unwrap().to_owned(),
+                selected_audio,
+            );
+        }
+    }
+
+    fn update_entry(&mut self, selected_mv: String, selected_audio: Option<String>) {
+        if let Some(audio) = selected_audio {
+            println!("Updating {} with {}", selected_mv, audio);
+            self.audio_video
+                .as_ref()
+                .borrow_mut()
+                .insert(selected_mv.to_owned(), audio);
+            assert!(
                 self.audio_video
+                .as_ref()
                     .borrow_mut()
-                    .insert(self.selected_mv.as_ref().unwrap().to_owned(), audio);
-                self.mvs_found
-                    .as_mut()
-                    .unwrap()
-                    .retain(|mv| mv != self.selected_mv.as_ref().unwrap());
-                self.selected_mv = None;
-            }
+                    .contains_key(&selected_mv.to_owned()),
+                "Failed to update entry"
+            );
+            self.mvs_found
+                .as_mut()
+                .unwrap()
+                .retain(|mv| mv != &selected_mv);
+            self.selected_mv = None;
         }
     }
 
@@ -219,10 +229,9 @@ mod tests {
         let video_file = mv_dir.join("video.mp4");
         create_file(&mv_dir, &video_file).unwrap();
         let mut updater = Updater::new(
-            "",
             mv_dir.to_str().unwrap().to_string(),
             "".to_string(),
-            RefCell::new(HashMap::new()),
+            Arc::new(RefCell::new(HashMap::new())),
         );
         updater.scan_mvs();
         assert_eq!(updater.mvs_found.as_ref().unwrap().len(), 1);
@@ -250,10 +259,9 @@ mod tests {
         create_file(&sub_dir_1, &audio_file).unwrap();
         create_file(&sub_dir_2, &audio_file_2).unwrap();
         let mut updater = Updater::new(
-            "",
             "".to_string(),
             audio_dir.to_str().unwrap().to_string(),
-            RefCell::new(HashMap::new()),
+            Arc::new(RefCell::new(HashMap::new())),
         );
         updater.scan_audio();
         assert_eq!(updater.audio_found.as_ref().unwrap().len(), 2);
@@ -267,5 +275,21 @@ mod tests {
             .as_ref()
             .unwrap()
             .contains(&audio_file_2.to_str().unwrap().to_string()));
+    }
+
+    #[test]
+    fn test_update_entry() {
+        let rc = Arc::new(RefCell::new(HashMap::new()));
+        let mut updater = Updater::new("".to_string(), "".to_string(), rc.clone());
+        updater.audio_found = Some(vec!["audio.mp3".to_string()]);
+        updater.mvs_found = Some(vec!["mv_0.mp4".to_string(), "mv_1.mp4".to_string()]);
+        assert_eq!(rc.borrow().len(), 0);
+        updater.update_entry("mv_0.mp4".to_string(), Some("audio.mp3".to_string()));
+        dbg!(&rc.borrow());
+        assert_eq!(rc.borrow().len(), 1);
+        assert_eq!(
+            rc.borrow().get("mv_0.mp4").unwrap().to_string(),
+            "audio.mp3".to_string()
+        );
     }
 }
