@@ -42,9 +42,7 @@ impl MVSelector {
         loop {
             clear_term(&self.header)
                 .unwrap_or_else(|e| eprintln!("Couldn't clear terminal: {}", e));
-            println!("Generating List..");
             let filtered_list = self.filtered_list();
-            dbg!(filtered_list);
             let menu = MenuOptions::generate_menu(vec![self.view_type.to_string()]);
             let fzf_view = FzfSelector::new(Some(self.filtered_list()), Some(menu.clone()), None);
             let selected = fzf_view.fzf_select();

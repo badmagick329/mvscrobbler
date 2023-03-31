@@ -1,0 +1,3 @@
+data_file: "/media/badmagick/HDD/Projects/rust_mvplayer/avinfo.json_test"
+video_dir: "/media/badmagick/HDD/Music/test_mvs/"
+audio_dir: "/media/badmagick/HDD/Music/test_library/"

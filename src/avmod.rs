@@ -85,7 +85,6 @@ impl AudioVideoData {
     }
 
     pub fn save_data(&mut self) {
-        println!("Saving data");
         let to_save = self.audio_video.borrow().clone();
         let data = serde_json::to_string_pretty(&to_save).unwrap();
         let mut file = fs::File::create(&self.data_file).unwrap();
@@ -113,25 +112,6 @@ impl AudioVideoData {
         self.video_list.clone().unwrap()
     }
 }
-
-// use serde::{Deserialize, Serialize};
-// use std::path::{Component, Path, PathBuf};
-// use std::{fs, process};
-//
-// #[derive(Debug, Serialize, Deserialize)]
-// pub struct YamlData {
-//     pub source: String,
-//     pub folders: Vec<String>,
-//     pub target: String,
-// }
-// /// Read the yaml file which contains the sourch dir, the dirs to be backed up and the target dir
-// pub fn read_yaml(file_name: &str) -> Result<YamlData> {
-//     let file_data = fs::read_to_string(file_name)
-//         .wrap_err(format!("Error while reading the file {file_name}"))?;
-//     let yaml: YamlData = serde_yaml::from_str(file_data.as_str())?;
-//     validate_yaml(&yaml)?;
-//     Ok(yaml)
-// }
 
 #[cfg(test)]
 mod tests {

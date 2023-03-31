@@ -76,7 +76,6 @@ impl Updater {
 
     fn update_entry(&mut self, selected_mv: String, selected_audio: Option<String>) {
         if let Some(audio) = selected_audio {
-            println!("Updating {} with {}", selected_mv, audio);
             self.audio_video
                 .as_ref()
                 .borrow_mut()
@@ -277,7 +276,6 @@ mod tests {
         updater.mvs_found = Some(vec!["mv_0.mp4".to_string(), "mv_1.mp4".to_string()]);
         assert_eq!(rc.borrow().len(), 0);
         updater.update_entry("mv_0.mp4".to_string(), Some("audio.mp3".to_string()));
-        dbg!(&rc.borrow());
         assert_eq!(rc.borrow().len(), 1);
         assert_eq!(
             rc.borrow().get("mv_0.mp4").unwrap().to_string(),
