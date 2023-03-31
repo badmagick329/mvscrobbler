@@ -35,6 +35,8 @@ pub async fn run() {
         config.video_dir.to_string(),
         config.audio_dir.to_string(),
         audio_video.clone(),
+        config.video_cmd.to_string(),
+        config.audio_cmd.to_string(),
     );
     avd.load_data();
     let mut mv_selector = MVSelector::new(avd);

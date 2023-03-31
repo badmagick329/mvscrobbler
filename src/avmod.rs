@@ -35,6 +35,8 @@ impl AudioVideoData {
         video_dir: String,
         audio_dir: String,
         audio_video: Arc<RefCell<JsonFormat>>,
+        video_cmd: String,
+        audio_cmd: String,
     ) -> Self {
         Self {
             data_file: data_file.to_string(),
@@ -42,7 +44,7 @@ impl AudioVideoData {
             audio_dir,
             audio_video,
             video_list: None,
-            player: MediaPlayer::default(),
+            player: MediaPlayer::new(video_cmd, audio_cmd),
         }
     }
 
@@ -130,6 +132,8 @@ mod tests {
             "video".to_string(),
             "audio".to_string(),
             rc.clone(),
+            "".to_string(),
+            "".to_string(),
         );
         // let mut borrowed = av_data.audio_video.deref().borrow_mut();
         // let mut borrowed = av_data.audio_video.as_ref().borrow_mut();
@@ -179,6 +183,8 @@ mod tests {
             video_dir.to_str().unwrap().to_string(),
             audio_dir.to_str().unwrap().to_string(),
             rc,
+            "".to_string(),
+            "".to_string(),
         );
         av_data.audio_video.as_ref().borrow_mut().insert(
             video_file1.to_str().unwrap().to_owned(),
@@ -210,6 +216,8 @@ mod tests {
             video_dir.to_str().unwrap().to_string(),
             audio_dir.to_str().unwrap().to_string(),
             rc,
+            "".to_string(),
+            "".to_string(),
         );
         av_data.audio_video.as_ref().borrow_mut().insert(
             video_file1.to_str().unwrap().to_owned(),

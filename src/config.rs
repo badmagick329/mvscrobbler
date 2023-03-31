@@ -8,6 +8,8 @@ pub struct Config {
     pub data_file: String,
     pub video_dir: String,
     pub audio_dir: String,
+    pub video_cmd: String,
+    pub audio_cmd: String,
 }
 
 #[derive(Debug)]
