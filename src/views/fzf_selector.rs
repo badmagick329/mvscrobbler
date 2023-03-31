@@ -33,7 +33,12 @@ impl FzfSelector {
             fzf_in.push('\n');
         }
         let mut child = Command::new("fzf")
-            .args(["--height", self.height.as_str(), "--reverse"])
+            .args([
+                "--height",
+                self.height.as_str(),
+                "--reverse",
+                "--tiebreak=begin",
+            ])
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()
