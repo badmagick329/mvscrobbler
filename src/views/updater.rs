@@ -209,16 +209,8 @@ mod tests {
     use tempdir::TempDir;
 
     fn create_file(parent: &Path, file: &Path) -> Result<(), std::io::Error> {
-        if let Err(e) = fs::create_dir_all(&parent) {
-            if e.kind() != std::io::ErrorKind::AlreadyExists {
-                return Err(e);
-            }
-        }
-        if let Err(e) = fs::File::create(&file) {
-            if e.kind() != std::io::ErrorKind::AlreadyExists {
-                return Err(e);
-            }
-        }
+        fs::create_dir_all(&parent)?;
+        fs::File::create(&file)?;
         Ok(())
     }
 
