@@ -1,6 +1,5 @@
-use std::io::{stdout, Write};
+use std::io::Write;
 use std::process::{Command, Stdio};
-use std::slice::Iter;
 use std::str;
 
 pub struct FzfSelector {

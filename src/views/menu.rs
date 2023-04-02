@@ -1,7 +1,6 @@
-use std::io::{stdout, Write};
-use std::slice::Iter;
 use super::clear_term;
 use super::fzf_selector::FzfSelector;
+use std::slice::Iter;
 
 #[derive(PartialEq, Eq, Clone)]
 pub enum MenuOptions {
@@ -9,6 +8,7 @@ pub enum MenuOptions {
     MVSelector,
     ToggleMVs,
     ToggleLive,
+    Random,
     Quit,
     Update,
 }
@@ -20,6 +20,7 @@ impl std::fmt::Display for MenuOptions {
             MenuOptions::MVSelector => write!(f, "MV Selector"),
             MenuOptions::ToggleMVs => write!(f, "Toggle MVs"),
             MenuOptions::ToggleLive => write!(f, "Toggle Live"),
+            MenuOptions::Random => write!(f, "Random"),
             MenuOptions::Quit => write!(f, "Quit"),
             MenuOptions::Update => write!(f, "Update"),
         }
@@ -28,11 +29,12 @@ impl std::fmt::Display for MenuOptions {
 
 impl MenuOptions {
     fn iterator() -> Iter<'static, MenuOptions> {
-        static OPTIONS: [MenuOptions; 6] = [
+        static OPTIONS: [MenuOptions; 7] = [
             MenuOptions::MainMenu,
             MenuOptions::MVSelector,
             MenuOptions::ToggleMVs,
             MenuOptions::ToggleLive,
+            MenuOptions::Random,
             MenuOptions::Quit,
             MenuOptions::Update,
         ];

@@ -1,10 +1,7 @@
-#![allow(unused_imports, dead_code, unused_variables, unused_must_use)]
 use std::process::Stdio;
 use std::sync::Arc;
-use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 use tokio::process::Command;
 use tokio::sync;
-use tokio::task::JoinHandle;
 use tokio::time;
 
 #[derive(Default)]
@@ -25,10 +22,10 @@ impl MediaPlayer {
     }
     pub async fn play_media(&mut self, audio_path: String, video_path: String) {
         if self.audio_tx.is_some() {
-            self.audio_tx.as_ref().unwrap().send(1).await;
+            let _ = self.audio_tx.as_ref().unwrap().send(1).await;
         }
         if self.video_tx.is_some() {
-            self.video_tx.as_ref().unwrap().send(1).await;
+            let _ = self.video_tx.as_ref().unwrap().send(1).await;
         }
         let (audio_tx, mut audio_rx) = sync::mpsc::channel::<usize>(1);
         let (video_tx, mut video_rx) = sync::mpsc::channel::<usize>(1);
@@ -37,7 +34,7 @@ impl MediaPlayer {
         let audio_cmd = self.audio_cmd.clone();
         let video_cmd = self.video_cmd.clone();
         tokio::spawn(async move {
-            let audio_split = audio_cmd.split(",");
+            let audio_split = audio_cmd.split(',');
             let mut child = Command::new(audio_split.clone().next().unwrap())
                 .args(audio_split.skip(1))
                 .arg(audio_path)
@@ -46,13 +43,13 @@ impl MediaPlayer {
             while child.try_wait().unwrap().is_none() {
                 time::sleep(time::Duration::from_millis(1000)).await;
                 if audio_rx.try_recv().is_ok() {
-                    child.kill().await;
+                    let _ = child.kill().await;
                     break;
                 }
             }
         });
         tokio::spawn(async move {
-            let video_split = video_cmd.split(",");
+            let video_split = video_cmd.split(',');
             let mut child = Command::new(video_split.clone().next().unwrap())
                 .args(video_split.skip(1))
                 .arg(video_path)
@@ -63,7 +60,7 @@ impl MediaPlayer {
             while child.try_wait().unwrap().is_none() {
                 time::sleep(time::Duration::from_millis(1000)).await;
                 if video_rx.try_recv().is_ok() {
-                    child.kill().await;
+                    let _ = child.kill().await;
                     break;
                 }
             }

@@ -43,7 +43,7 @@ impl Updater {
             if self.mvs_found.is_none() {
                 self.scan_mvs();
             }
-            if self.mvs_found.as_ref().unwrap().len() == 0 {
+            if self.mvs_found.as_ref().unwrap().is_empty() {
                 return MenuOptions::MVSelector;
             }
             if self.audio_found.is_none() {
@@ -53,7 +53,7 @@ impl Updater {
             clear_term("Select an MV to update")
                 .unwrap_or_else(|e| eprintln!("Couldn't clear terminal: {}", e));
             let audio_list = self.audio_found.as_ref().unwrap();
-            assert!(audio_list.len() > 0, "No audio files found");
+            assert!(!audio_list.is_empty(), "No audio files found");
             let mv_list = self.mvs_found.as_ref().unwrap();
             let fzf_view = FzfSelector::new(
                 Some(mv_list.clone()),
@@ -84,7 +84,7 @@ impl Updater {
                 self.audio_video
                 .as_ref()
                     .borrow_mut()
-                    .contains_key(&selected_mv.to_owned()),
+                    .contains_key(&selected_mv),
                 "Failed to update entry"
             );
             self.mvs_found
@@ -208,8 +208,8 @@ mod tests {
     use tempdir::TempDir;
 
     fn create_file(parent: &Path, file: &Path) -> Result<(), std::io::Error> {
-        fs::create_dir_all(&parent)?;
-        fs::File::create(&file)?;
+        fs::create_dir_all(parent)?;
+        fs::File::create(file)?;
         Ok(())
     }
 

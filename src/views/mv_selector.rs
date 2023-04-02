@@ -2,8 +2,6 @@ use super::super::avmod::AudioVideoData;
 use super::clear_term;
 use super::fzf_selector::FzfSelector;
 use super::menu::MenuOptions;
-use std::slice::Iter;
-use std::str;
 
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub enum FilterTypes {
@@ -42,7 +40,6 @@ impl MVSelector {
         loop {
             clear_term(&self.header)
                 .unwrap_or_else(|e| eprintln!("Couldn't clear terminal: {}", e));
-            let filtered_list = self.filtered_list();
             let menu = MenuOptions::generate_menu(vec![self.view_type.to_string()]);
             let fzf_view = FzfSelector::new(Some(self.filtered_list()), Some(menu.clone()), None);
             let selected = fzf_view.fzf_select();
@@ -55,6 +52,15 @@ impl MVSelector {
                 selected
             );
         }
+    }
+
+    pub async fn play_random(&mut self) -> MenuOptions {
+        let filtered_list = self.filtered_list();
+        let random_video = filtered_list
+            .get(rand::random::<usize>() % filtered_list.len())
+            .unwrap();
+        self.avd.play_media(random_video).await;
+        MenuOptions::MVSelector
     }
 
     fn filtered_list(&mut self) -> Vec<String> {
@@ -77,21 +83,6 @@ impl MVSelector {
             })
             .map(|video| video.to_owned())
             .collect()
-    }
-
-    fn filter_video(&self, video: &str) -> bool {
-        let mv_name = video.split(" - ").last();
-        if mv_name.is_none() {
-            return false;
-        }
-        let is_live = mv_name.unwrap().contains('(') && mv_name.unwrap().contains(')');
-        if self.filters.contains(&FilterTypes::MVs) && !is_live {
-            return false;
-        }
-        if self.filters.contains(&FilterTypes::Live) && is_live {
-            return false;
-        }
-        true
     }
 
     pub fn toggle_filter(&mut self, filter: FilterTypes) -> MenuOptions {

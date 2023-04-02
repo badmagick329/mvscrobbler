@@ -3,8 +3,8 @@ use super::media_player::MediaPlayer;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs;
-use std::io::{Read, Write};
-use std::path::{Component, Path};
+use std::io::Write;
+use std::path::Path;
 use std::sync::Arc;
 
 type JsonFormat = HashMap<String, String>;
@@ -77,8 +77,8 @@ impl AudioVideoData {
                 continue;
             }
             self.audio_video.borrow_mut().insert(
-                format!("{}", full_vpath.to_str().unwrap()),
-                format!("{}", full_apath.to_str().unwrap()),
+                full_vpath.to_str().unwrap().to_string(),
+                full_apath.to_str().unwrap().to_string(),
             );
         }
         if update_save {
@@ -103,8 +103,8 @@ impl AudioVideoData {
                 .map(|k| {
                     k.to_string()
                         .trim_start_matches(&self.video_dir)
-                        .trim_start_matches("/")
-                        .trim_start_matches("\\")
+                        .trim_start_matches('/')
+                        .trim_start_matches('\\')
                         .to_string()
                 })
                 .collect::<Vec<String>>();
@@ -117,8 +117,6 @@ impl AudioVideoData {
 
 #[cfg(test)]
 mod tests {
-    use std::borrow::BorrowMut;
-
     use super::*;
     use tempdir::TempDir;
 
@@ -131,7 +129,7 @@ mod tests {
             data_file.to_str().unwrap(),
             "video".to_string(),
             "audio".to_string(),
-            rc.clone(),
+            rc,
             "".to_string(),
             "".to_string(),
         );
@@ -154,12 +152,12 @@ mod tests {
     }
 
     fn create_file(parent: &Path, file: &Path) -> Result<(), std::io::Error> {
-        if let Err(e) = fs::create_dir(&parent) {
+        if let Err(e) = fs::create_dir(parent) {
             if e.kind() != std::io::ErrorKind::AlreadyExists {
                 return Err(e);
             }
         }
-        if let Err(e) = fs::File::create(&file) {
+        if let Err(e) = fs::File::create(file) {
             if e.kind() != std::io::ErrorKind::AlreadyExists {
                 return Err(e);
             }

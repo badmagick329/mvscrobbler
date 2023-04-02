@@ -1,22 +1,17 @@
-#![allow(unused_imports, dead_code, unused_variables, unused_must_use)]
 pub mod avmod;
+pub mod config;
 pub mod media_player;
 pub mod views;
-pub mod config;
 
 use std::cell::RefCell;
-use std::rc::Rc;
 use std::collections::HashMap;
-use std::io::{stdout, Write};
 use std::sync::Arc;
 
 use avmod::AudioVideoData;
-use crossterm::{cursor, terminal, QueueableCommand};
-use views::fzf_selector::FzfSelector;
+use config::Config;
 use views::menu::{MainMenu, MenuOptions};
 use views::mv_selector::{FilterTypes, MVSelector};
 use views::updater::Updater;
-use config::{Config, ConfigError};
 
 // const AVINFO: &str = "/media/badmagick/HDD/Projects/rust_mvplayer/avinfo.json_test";
 // const VIDEO_DIR: &str = "/media/badmagick/HDD/Music/test_mvs/";
@@ -24,8 +19,6 @@ use config::{Config, ConfigError};
 // const AVINFO: &str = "F:\\Projects\\rust_mvplayer\\avinfo.json";
 // const VPATH_PREFIX: &str = "F:\\Music\\MVs\\";
 // const APATH_PREFIX: &str = "F:\\";
-
-type JsonFormat = HashMap<String, String>;
 
 pub async fn run() {
     let config = Config::build("config.yml").unwrap();
@@ -69,6 +62,9 @@ pub async fn run() {
                 mv_selector.avd.save_data();
                 mv_selector.avd.video_list = None;
             }
+            MenuOptions::Random => {
+                selected_opt = mv_selector.play_random().await;
+            }
         }
     }
 }
@@ -101,8 +97,13 @@ mod tests {
         struct MyStruct {
             hmap: Arc<RefCell<HashMap<String, String>>>,
         }
-        let strct = MyStruct { hmap: hash_map.clone() };
-        strct.hmap.borrow_mut().insert("test2".to_owned(), "test2".to_owned());
+        let strct = MyStruct {
+            hmap: hash_map,
+        };
+        strct
+            .hmap
+            .borrow_mut()
+            .insert("test2".to_owned(), "test2".to_owned());
         assert!(strct.hmap.borrow().contains_key("test2"));
     }
 }

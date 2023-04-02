@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::fs;
-use std::path::{Component, Path, PathBuf};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
