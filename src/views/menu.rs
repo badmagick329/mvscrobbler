@@ -8,6 +8,9 @@ pub enum MenuOptions {
     MVSelector,
     ToggleMVs,
     ToggleLive,
+    SortAsc,
+    SortDesc,
+    SortMtime,
     Random,
     Quit,
     Update,
@@ -20,6 +23,9 @@ impl std::fmt::Display for MenuOptions {
             MenuOptions::MVSelector => write!(f, "MV Selector"),
             MenuOptions::ToggleMVs => write!(f, "Toggle MVs"),
             MenuOptions::ToggleLive => write!(f, "Toggle Live"),
+            MenuOptions::SortAsc => write!(f, "Sort Ascending"),
+            MenuOptions::SortDesc => write!(f, "Sort Descending"),
+            MenuOptions::SortMtime => write!(f, "Sort by Mtime"),
             MenuOptions::Random => write!(f, "Random"),
             MenuOptions::Quit => write!(f, "Quit"),
             MenuOptions::Update => write!(f, "Update"),
@@ -29,11 +35,14 @@ impl std::fmt::Display for MenuOptions {
 
 impl MenuOptions {
     fn iterator() -> Iter<'static, MenuOptions> {
-        static OPTIONS: [MenuOptions; 7] = [
+        static OPTIONS: [MenuOptions; 10] = [
             MenuOptions::MainMenu,
             MenuOptions::MVSelector,
             MenuOptions::ToggleMVs,
             MenuOptions::ToggleLive,
+            MenuOptions::SortAsc,
+            MenuOptions::SortDesc,
+            MenuOptions::SortMtime,
             MenuOptions::Random,
             MenuOptions::Quit,
             MenuOptions::Update,

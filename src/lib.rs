@@ -7,7 +7,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use avmod::AudioVideoData;
+use avmod::{AudioVideoData,Sorting};
 use config::Config;
 use views::menu::{MainMenu, MenuOptions};
 use views::mv_selector::{FilterTypes, MVSelector};
@@ -51,6 +51,51 @@ pub async fn run() {
             }
             MenuOptions::ToggleMVs => {
                 selected_opt = mv_selector.toggle_filter(FilterTypes::MVs);
+            }
+            MenuOptions::SortAsc => {
+                match mv_selector.avd.sorting {
+                    Sorting::Ascending => {
+                    }
+                    Sorting::Descending => {
+                        mv_selector.avd.sorting = Sorting::Ascending;
+                        mv_selector.avd.video_list = None;
+                    }
+                    Sorting::Mtime => {
+                        mv_selector.avd.sorting = Sorting::Ascending;
+                        mv_selector.avd.video_list = None;
+                    }
+                }
+                selected_opt = MenuOptions::MVSelector;
+            }
+            MenuOptions::SortDesc => {
+                match mv_selector.avd.sorting {
+                    Sorting::Ascending => {
+                        mv_selector.avd.sorting = Sorting::Descending;
+                        mv_selector.avd.video_list = None;
+                    }
+                    Sorting::Descending => {
+                    }
+                    Sorting::Mtime => {
+                        mv_selector.avd.sorting = Sorting::Descending;
+                        mv_selector.avd.video_list = None;
+                    }
+                }
+                selected_opt = MenuOptions::MVSelector;
+            }
+            MenuOptions::SortMtime => {
+                match mv_selector.avd.sorting {
+                    Sorting::Ascending => {
+                        mv_selector.avd.sorting = Sorting::Mtime;
+                        mv_selector.avd.video_list = None;
+                    }
+                    Sorting::Descending => {
+                        mv_selector.avd.sorting = Sorting::Mtime;
+                        mv_selector.avd.video_list = None;
+                    }
+                    Sorting::Mtime => {
+                    }
+                }
+                selected_opt = MenuOptions::MVSelector;
             }
             MenuOptions::Update => {
                 let mut updater = Updater::new(

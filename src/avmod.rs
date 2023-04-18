@@ -8,6 +8,12 @@ use std::path::Path;
 use std::sync::Arc;
 
 type JsonFormat = HashMap<String, String>;
+#[derive(Debug, Clone, Copy,PartialEq)]
+pub enum Sorting {
+    Ascending,
+    Descending,
+    Mtime,
+}
 
 /// Used to store the data for the media files
 /// # Fields
@@ -26,6 +32,7 @@ pub struct AudioVideoData {
     pub audio_dir: String,
     pub audio_video: Arc<RefCell<JsonFormat>>,
     pub video_list: Option<Vec<String>>,
+    pub sorting: Sorting,
     player: MediaPlayer,
 }
 
@@ -44,6 +51,7 @@ impl AudioVideoData {
             audio_dir,
             audio_video,
             video_list: None,
+            sorting: Sorting::Descending,
             player: MediaPlayer::new(video_cmd, audio_cmd),
         }
     }
@@ -94,24 +102,41 @@ impl AudioVideoData {
     }
 
     pub fn list_videos(&mut self) -> Vec<String> {
-        if self.video_list.is_none() {
-            let mut vlist = self
-                .audio_video
-                .borrow()
-                .clone()
-                .keys()
-                .map(|k| {
-                    k.to_string()
-                        .trim_start_matches(&self.video_dir)
-                        .trim_start_matches('/')
-                        .trim_start_matches('\\')
-                        .to_string()
-                })
-                .collect::<Vec<String>>();
-            vlist.sort();
-            self.video_list = Some(vlist);
+        if self.video_list.is_some() {
+            return self.video_list.clone().unwrap();
         }
-        self.video_list.clone().unwrap()
+        let mut vlist = self
+            .audio_video
+            .borrow()
+            .clone()
+            .keys()
+            .map(|k| {
+                k.to_string()
+                    .trim_start_matches(&self.video_dir)
+                    .trim_start_matches('/')
+                    .trim_start_matches('\\')
+                    .to_string()
+            })
+            .collect::<Vec<String>>();
+        match self.sorting {
+            Sorting::Ascending => vlist.sort(),
+            Sorting::Descending => vlist.sort_by(|a, b| b.cmp(a)),
+            Sorting::Mtime => {
+                let mut vlist2 = vlist
+                    .iter()
+                    .map(|k| {
+                        let full_path = Path::new(&self.video_dir).join(k);
+                        let metadata = fs::metadata(full_path).unwrap();
+                        let mtime = metadata.modified().unwrap();
+                        (k.to_string(), mtime)
+                    })
+                    .collect::<Vec<(String, std::time::SystemTime)>>();
+                vlist2.sort_by(|a, b| b.1.cmp(&a.1));
+                vlist = vlist2.iter().map(|k| k.0.to_string()).collect();
+            }
+        }
+        self.video_list = Some(vlist.clone());
+        vlist
     }
 }
 
