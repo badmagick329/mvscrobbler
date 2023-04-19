@@ -8,7 +8,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 type JsonFormat = HashMap<String, String>;
-#[derive(Debug, Clone, Copy,PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Sorting {
     Ascending,
     Descending,
@@ -32,6 +32,7 @@ pub struct AudioVideoData {
     pub audio_dir: String,
     pub audio_video: Arc<RefCell<JsonFormat>>,
     pub video_list: Option<Vec<String>>,
+    pub search_filtered_list: Option<Vec<String>>,
     pub sorting: Sorting,
     player: MediaPlayer,
 }
@@ -51,6 +52,7 @@ impl AudioVideoData {
             audio_dir,
             audio_video,
             video_list: None,
+            search_filtered_list: None,
             sorting: Sorting::Descending,
             player: MediaPlayer::new(video_cmd, audio_cmd),
         }
@@ -102,6 +104,9 @@ impl AudioVideoData {
     }
 
     pub fn list_videos(&mut self) -> Vec<String> {
+        if self.search_filtered_list.is_some() {
+            return self.search_filtered_list.clone().unwrap();
+        }
         if self.video_list.is_some() {
             return self.video_list.clone().unwrap();
         }

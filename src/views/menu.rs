@@ -1,6 +1,7 @@
 use super::clear_term;
 use super::fzf_selector::FzfSelector;
 use std::slice::Iter;
+use super::fzf_selector::SelectType;
 
 #[derive(PartialEq, Eq, Clone)]
 pub enum MenuOptions {
@@ -14,6 +15,7 @@ pub enum MenuOptions {
     Random,
     Quit,
     Update,
+    SearchFilter,
 }
 
 impl std::fmt::Display for MenuOptions {
@@ -29,13 +31,14 @@ impl std::fmt::Display for MenuOptions {
             MenuOptions::Random => write!(f, "Random"),
             MenuOptions::Quit => write!(f, "Quit"),
             MenuOptions::Update => write!(f, "Update"),
+            MenuOptions::SearchFilter => write!(f, "Search Filter"),
         }
     }
 }
 
 impl MenuOptions {
     fn iterator() -> Iter<'static, MenuOptions> {
-        static OPTIONS: [MenuOptions; 10] = [
+        static OPTIONS: [MenuOptions; 11] = [
             MenuOptions::MainMenu,
             MenuOptions::MVSelector,
             MenuOptions::ToggleMVs,
@@ -46,6 +49,7 @@ impl MenuOptions {
             MenuOptions::Random,
             MenuOptions::Quit,
             MenuOptions::Update,
+            MenuOptions::SearchFilter,
         ];
         OPTIONS.iter()
     }
@@ -83,7 +87,7 @@ impl MainMenu {
                 .unwrap_or_else(|e| eprintln!("Couldn't clear terminal: {}", e));
             let menu = MenuOptions::generate_menu(vec![self.view_type.to_string()]);
             let fzf_view = FzfSelector::new(None, Some(menu.clone()), None);
-            let selected = fzf_view.fzf_select();
+            let selected = fzf_view.fzf_select(SelectType::Single);
             if let Some(view) = MenuOptions::get_selection(&selected) {
                 return view.clone();
             }

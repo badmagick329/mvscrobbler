@@ -2,6 +2,7 @@ pub mod fzf_selector;
 pub mod menu;
 pub mod mv_selector;
 pub mod updater;
+pub mod search_filter;
 
 use crossterm::{cursor, terminal, QueueableCommand};
 use std::io::{stdout, Write};

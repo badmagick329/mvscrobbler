@@ -7,10 +7,11 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use avmod::{AudioVideoData,Sorting};
+use avmod::{AudioVideoData, Sorting};
 use config::Config;
 use views::menu::{MainMenu, MenuOptions};
 use views::mv_selector::{FilterTypes, MVSelector};
+use views::search_filter::SearchFilters;
 use views::updater::Updater;
 
 // const AVINFO: &str = "/media/badmagick/HDD/Projects/rust_mvplayer/avinfo.json_test";
@@ -54,8 +55,7 @@ pub async fn run() {
             }
             MenuOptions::SortAsc => {
                 match mv_selector.avd.sorting {
-                    Sorting::Ascending => {
-                    }
+                    Sorting::Ascending => {}
                     Sorting::Descending => {
                         mv_selector.avd.sorting = Sorting::Ascending;
                         mv_selector.avd.video_list = None;
@@ -73,8 +73,7 @@ pub async fn run() {
                         mv_selector.avd.sorting = Sorting::Descending;
                         mv_selector.avd.video_list = None;
                     }
-                    Sorting::Descending => {
-                    }
+                    Sorting::Descending => {}
                     Sorting::Mtime => {
                         mv_selector.avd.sorting = Sorting::Descending;
                         mv_selector.avd.video_list = None;
@@ -92,8 +91,7 @@ pub async fn run() {
                         mv_selector.avd.sorting = Sorting::Mtime;
                         mv_selector.avd.video_list = None;
                     }
-                    Sorting::Mtime => {
-                    }
+                    Sorting::Mtime => {}
                 }
                 selected_opt = MenuOptions::MVSelector;
             }
@@ -109,6 +107,18 @@ pub async fn run() {
             }
             MenuOptions::Random => {
                 selected_opt = mv_selector.play_random().await;
+            }
+            MenuOptions::SearchFilter => {
+                match &mv_selector.avd.search_filtered_list {
+                    None => {
+                        let av = mv_selector.filtered_list();
+                        let mut search_filter = SearchFilters::new(av);
+                        let selected_videos = search_filter.start();
+                        mv_selector.set_search_filters(Some(selected_videos.to_owned()));
+                    }
+                    Some(_) => mv_selector.set_search_filters(None),
+                }
+                selected_opt = MenuOptions::MVSelector;
             }
         }
     }
@@ -142,9 +152,7 @@ mod tests {
         struct MyStruct {
             hmap: Arc<RefCell<HashMap<String, String>>>,
         }
-        let strct = MyStruct {
-            hmap: hash_map,
-        };
+        let strct = MyStruct { hmap: hash_map };
         strct
             .hmap
             .borrow_mut()

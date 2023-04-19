@@ -1,15 +1,9 @@
-#![allow(unused_imports, dead_code, unused_variables, unused_mut)]
 use crate::views::clear_term;
 
-use super::fzf_selector::FzfSelector;
+use super::fzf_selector::{FzfSelector, SelectType};
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::fs;
-use std::io::{stdout, Write};
 use std::path::Path;
-use std::process::{Command, Stdio};
-use std::slice::Iter;
-use std::str;
 use std::sync::Arc;
 use walkdir::WalkDir;
 
@@ -61,7 +55,7 @@ impl Updater {
                 None,
             );
             self.selected_mv = None;
-            self.selected_mv = Some(fzf_view.fzf_select());
+            self.selected_mv = Some(fzf_view.fzf_select(SelectType::Single));
             if self.selected_mv.as_ref().unwrap() == "[[Back]]" {
                 return MenuOptions::MVSelector;
             }
@@ -82,7 +76,7 @@ impl Updater {
                 .insert(selected_mv.to_owned(), audio);
             assert!(
                 self.audio_video
-                .as_ref()
+                    .as_ref()
                     .borrow_mut()
                     .contains_key(&selected_mv),
                 "Failed to update entry"
@@ -191,7 +185,7 @@ impl ListAudios {
             Some(vec!["[[Back]]".to_owned()]),
             None,
         );
-        let selected_audio = fzf_view.fzf_select();
+        let selected_audio = fzf_view.fzf_select(SelectType::Single);
         if selected_audio.is_empty() {
             return None;
         }
@@ -206,6 +200,8 @@ impl ListAudios {
 mod tests {
     use super::*;
     use tempdir::TempDir;
+    use std::path::Path;
+    use std::fs;
 
     fn create_file(parent: &Path, file: &Path) -> Result<(), std::io::Error> {
         fs::create_dir_all(parent)?;
@@ -246,7 +242,7 @@ mod tests {
         let audio_file = sub_dir_1.join("audio.mp3");
         let sub_dir_2 = audio_dir.join("sub_dir_2").join("sub_sub_dir_2");
         let audio_file_2 = sub_dir_2.join("audio_2.flac");
-        let not_audio_file = sub_dir_2.join("not_audio.txt");
+        let _not_audio_file = sub_dir_2.join("not_audio.txt");
         create_file(&sub_dir_1, &audio_file).unwrap();
         create_file(&sub_dir_2, &audio_file_2).unwrap();
         let mut updater = Updater::new(

@@ -1,6 +1,6 @@
 use super::super::avmod::AudioVideoData;
 use super::clear_term;
-use super::fzf_selector::FzfSelector;
+use super::fzf_selector::{FzfSelector, SelectType};
 use super::menu::MenuOptions;
 
 #[derive(PartialEq, Eq, Clone, Debug)]
@@ -42,7 +42,7 @@ impl MVSelector {
                 .unwrap_or_else(|e| eprintln!("Couldn't clear terminal: {}", e));
             let menu = MenuOptions::generate_menu(vec![self.view_type.to_string()]);
             let fzf_view = FzfSelector::new(Some(self.filtered_list()), Some(menu.clone()), None);
-            let selected = fzf_view.fzf_select();
+            let selected = fzf_view.fzf_select(SelectType::Single);
             if let Some(view) = MenuOptions::get_selection(&selected) {
                 return view.clone();
             }
@@ -63,7 +63,7 @@ impl MVSelector {
         MenuOptions::MVSelector
     }
 
-    fn filtered_list(&mut self) -> Vec<String> {
+    pub fn filtered_list(&mut self) -> Vec<String> {
         self.avd
             .list_videos()
             .iter()
@@ -92,5 +92,9 @@ impl MVSelector {
             self.filters.push(filter);
         }
         MenuOptions::MVSelector
+    }
+
+    pub fn set_search_filters(&mut self, new_list: Option<Vec<String>>) {
+        self.avd.search_filtered_list = new_list;
     }
 }

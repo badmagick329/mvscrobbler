@@ -8,6 +8,12 @@ pub struct FzfSelector {
     height: String,
 }
 
+#[derive(Clone, Copy, PartialEq)]
+pub enum SelectType {
+    Single,
+    Multi,
+}
+
 impl FzfSelector {
     pub fn new(
         inputs: Option<Vec<String>>,
@@ -21,7 +27,7 @@ impl FzfSelector {
         }
     }
 
-    pub fn fzf_select(self) -> String {
+    pub fn fzf_select(self, select_type: SelectType) -> String {
         let mut fzf_in = String::new();
         for input in self.inputs.iter() {
             fzf_in.push_str(input);
@@ -31,13 +37,23 @@ impl FzfSelector {
             fzf_in.push_str(option);
             fzf_in.push('\n');
         }
-        let mut child = Command::new("fzf")
-            .args([
+        let args = match select_type {
+            SelectType::Single => vec![
                 "--height",
                 self.height.as_str(),
                 "--reverse",
                 "--tiebreak=begin",
-            ])
+            ],
+            SelectType::Multi => vec![
+                "--height",
+                self.height.as_str(),
+                "--reverse",
+                "--tiebreak=begin",
+                "-m",
+            ],
+        };
+        let mut child = Command::new("fzf")
+            .args(args)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()
