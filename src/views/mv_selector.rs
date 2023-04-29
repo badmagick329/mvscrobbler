@@ -23,6 +23,7 @@ pub struct MVSelector {
     pub avd: AudioVideoData,
     header: String,
     filters: Vec<FilterTypes>,
+    played_list: Vec<String>,
 }
 
 /// UI Entrypoint
@@ -33,6 +34,7 @@ impl MVSelector {
             avd,
             header: "Search for an MV or search quit to exit".to_owned(),
             filters: Vec::new(),
+            played_list: Vec::new(),
         }
     }
 
@@ -46,6 +48,7 @@ impl MVSelector {
             if let Some(view) = MenuOptions::get_selection(&selected) {
                 return view.clone();
             }
+            self.played_list.clear();
             self.avd.play_media(&selected).await;
             self.header = format!(
                 "Playing {}\n\nSearch for an MV or search quit to exit",
@@ -55,11 +58,27 @@ impl MVSelector {
     }
 
     pub async fn play_random(&mut self) -> MenuOptions {
-        let filtered_list = self.filtered_list();
+        let filtered_list = self
+            .filtered_list()
+            .iter()
+            .filter(|video| !self.played_list.contains(video))
+            .map(|video| video.to_owned())
+            .collect::<Vec<String>>();
+        if filtered_list.is_empty() {
+            self.played_list.clear();
+            self.header = "No more videos to play\n\nClearing played list".to_owned();
+            return MenuOptions::MVSelector;
+        }
         let random_video = filtered_list
             .get(rand::random::<usize>() % filtered_list.len())
             .unwrap();
+        self.played_list.push(random_video.to_owned());
         self.avd.play_media(random_video).await;
+        self.header = format!(
+            "Playing {}\nPlayed {} videos\n\nSearch for an MV or search quit to exit. ",
+            random_video,
+            self.played_list.len()
+        );
         MenuOptions::MVSelector
     }
 
