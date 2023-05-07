@@ -120,6 +120,10 @@ pub async fn run() {
                 }
                 selected_opt = MenuOptions::MVSelector;
             }
+            MenuOptions::ClearPlayed => {
+                mv_selector.played_list.clear();
+                selected_opt = MenuOptions::MVSelector;
+            }
         }
     }
 }

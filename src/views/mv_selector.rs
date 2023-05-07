@@ -23,7 +23,7 @@ pub struct MVSelector {
     pub avd: AudioVideoData,
     header: String,
     filters: Vec<FilterTypes>,
-    played_list: Vec<String>,
+    pub played_list: Vec<String>,
 }
 
 /// UI Entrypoint
@@ -48,7 +48,6 @@ impl MVSelector {
             if let Some(view) = MenuOptions::get_selection(&selected) {
                 return view.clone();
             }
-            self.played_list.clear();
             self.avd.play_media(&selected).await;
             self.header = format!(
                 "Playing {}\n\nSearch for an MV or search quit to exit",

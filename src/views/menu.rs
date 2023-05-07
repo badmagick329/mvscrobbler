@@ -16,6 +16,7 @@ pub enum MenuOptions {
     Quit,
     Update,
     SearchFilter,
+    ClearPlayed,
 }
 
 impl std::fmt::Display for MenuOptions {
@@ -32,13 +33,14 @@ impl std::fmt::Display for MenuOptions {
             MenuOptions::Quit => write!(f, "Quit"),
             MenuOptions::Update => write!(f, "Update"),
             MenuOptions::SearchFilter => write!(f, "Search Filter"),
+            MenuOptions::ClearPlayed => write!(f, "Clear Played"),
         }
     }
 }
 
 impl MenuOptions {
     fn iterator() -> Iter<'static, MenuOptions> {
-        static OPTIONS: [MenuOptions; 11] = [
+        static OPTIONS: [MenuOptions; 12] = [
             MenuOptions::MainMenu,
             MenuOptions::MVSelector,
             MenuOptions::ToggleMVs,
@@ -50,6 +52,7 @@ impl MenuOptions {
             MenuOptions::Quit,
             MenuOptions::Update,
             MenuOptions::SearchFilter,
+            MenuOptions::ClearPlayed,
         ];
         OPTIONS.iter()
     }
