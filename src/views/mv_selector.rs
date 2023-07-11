@@ -45,6 +45,9 @@ impl MVSelector {
             let menu = MenuOptions::generate_menu(vec![self.view_type.to_string()]);
             let fzf_view = FzfSelector::new(Some(self.filtered_list()), Some(menu.clone()), None);
             let selected = fzf_view.fzf_select(SelectType::Single);
+            if selected.is_empty() {
+                return MenuOptions::Quit;
+            }
             if let Some(view) = MenuOptions::get_selection(&selected) {
                 return view.clone();
             }

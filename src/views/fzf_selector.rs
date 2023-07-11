@@ -39,12 +39,14 @@ impl FzfSelector {
         }
         let args = match select_type {
             SelectType::Single => vec![
+                "-i",
                 "--height",
                 self.height.as_str(),
                 "--reverse",
                 "--tiebreak=begin",
             ],
             SelectType::Multi => vec![
+                "-i",
                 "--height",
                 self.height.as_str(),
                 "--reverse",
